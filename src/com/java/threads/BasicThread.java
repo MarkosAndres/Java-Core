@@ -1,19 +1,34 @@
 package com.java.threads;
 
 public class BasicThread {
-	public static void main(String[] args) {
-		Thread t = new Thread(new MyRunnable());
+	public static void main(String[] args) throws InterruptedException {
 		
-		t.start();
+		MyRunnable runnable = new MyRunnable();
+		Thread t = new Thread(runnable);
+		
+		t.start();		
+		
+		while(t.isAlive()){
+			System.out.println("Main going to sleep..");
+			Thread.sleep(50);
+		}
+		
+		System.out.println("main: "+runnable.var);
 	}
 }
 
 
 class MyRunnable implements Runnable{
+	
+	int var;
 
 	@Override
 	public void run() {
-		System.out.println("Este es mi thread");
+		for (int i = 0; i < 10541230; i++){
+			new String("efe");
+			var = i;
+		}		
+		System.out.println("thread: "+ var);
 	}
 	
 }
