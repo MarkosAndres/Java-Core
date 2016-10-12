@@ -24,8 +24,7 @@ class Operator implements Runnable{
 	public Operator(Machine machine){
 		this.machineA = machine;
 	}
-	
-	
+		
 	public void run() {
 		while(true){
 			Random r = new Random();
@@ -33,9 +32,13 @@ class Operator implements Runnable{
 			int flag = r.nextInt(15554654);
 			if(flag == 1) {
 				int numJobsToAdd = r.nextInt(5);
-				System.out.println("Adding "+ numJobsToAdd + " jobs");
-				for (int i = 0; i < numJobsToAdd; i++)				
-					machineA.addJob("job to do");
+				synchronized (machineA.getJobs()) {
+					for (int i = 0; i < numJobsToAdd; i++)				
+						machineA.addJob("job to do");
+					
+					System.out.println("Added "+ numJobsToAdd + " jobs");
+					machineA.getJobs().notifyAll();
+				}				
 			}
 		}
 	}
@@ -43,40 +46,44 @@ class Operator implements Runnable{
 
 class BigMachine implements Runnable, Machine{	
 	List<String> jobs = new ArrayList<String>();
-	
-	
+		
 	public void run(){
-	try{
-		while(true){			
-			synchronized (jobs) {
-				if(jobs.isEmpty()){
-					System.out.println("No jobs, going to wait..");
-					jobs.wait();
+		try{
+			while(true){			
+				synchronized (jobs) {
+					if(jobs.isEmpty()){
+						System.out.println("No jobs, going to wait..");
+						jobs.wait();
+					}
+					else{
+						System.out.println("Processing all jobs..("+ jobs.size() +")");
+						jobs.clear();
+						//Thread.sleep(1000);
+					}					
 				}
-				else{
-					System.out.println("Processing all jobs..("+ jobs.size() +")");
-					jobs.clear();
-					Thread.sleep(1000);
-				}					
-			}
-		}			
-	}
-	catch(Exception e) {
-		e.printStackTrace();
-	}
+			}			
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	
 	public void addJob(String job) {
-		synchronized (jobs) {
-			this.jobs.add(job);
-			jobs.notifyAll();
-		}	
-	}	
+		//synchronized (jobs) {
+			jobs.add(job);
+			//jobs.notifyAll();
+		//}	
+	}
+	
+	public List<String> getJobs() {
+		return this.jobs;
+	}
 
 }
 
 
 interface Machine extends Runnable{
 	void addJob(String job);
+	List<String> getJobs();
 }
